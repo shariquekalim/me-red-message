@@ -1,6 +1,5 @@
 package com.me.controller;
 
-
 import com.me.bean.NativeRepository;
 import com.me.bean.OtpBeans;
 import com.me.bean.QueryResult;
@@ -12,11 +11,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.mail.*;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
+import jakarta.mail.*;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
+
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -156,7 +156,7 @@ public class MessageContrl {
 //			String https_url = "https://hydgw.sms.gov.in/failsafe/MLink?username=" + accData.getUserName() + "&pin="
 //					+ accData.getPin();
 
-			System.out.println("https_url---->" + https_url);
+//			System.out.println("https_url---->" + https_url);
 			URL url;
 			String messageval = "";
 			try {
@@ -174,7 +174,7 @@ public class MessageContrl {
 //						+ otpData.getSignature() + "&dlt_entity_id=" + otpData.getEntityId() + "&dlt_template_id="
 //						+ otpData.getTemplateId();
 
-				System.out.println("final message----" + q);
+//				System.out.println("final message----" + q);
 
 				url = new URL(https_url);
 				HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
@@ -316,61 +316,64 @@ public class MessageContrl {
 		return otpServiceImp.getDashboardData();
 	}
 
-	@RequestMapping(method = RequestMethod.POST, value = "/sendMessage", consumes = MediaType.APPLICATION_JSON_VALUE )
+	@RequestMapping(method = RequestMethod.POST, value = "/sendMessage", consumes = MediaType.APPLICATION_JSON_VALUE)
 	public Map<String, String> sendMessage(@RequestBody EmailBean otpBeansData) {
 		ObjectMapper mapperObj = new ObjectMapper();
-//		EmailBean otpBeansData = new EmailBean();
 		EmailBean dbData = new EmailBean();
-
-		// System.out.println(data);
-
 		ApplicationRegistration dbData1 = new ApplicationRegistration();
 
-//		System.out.println(data);
-
-//		try {
-//			otpBeansData = mapperObj.readValue(data, new TypeReference<EmailBean>() {
-//			});
-//		} catch (Exception ex) {
-//			ex.printStackTrace();
-//		}
-
-//		System.out.println("otpBeansData--->"+otpBeansData);
+		if (otpBeansData.getIsDbBased() == 0) {
+			dbData.setEmailToType("D");
+			dbData.setEmailCcType("D");
+			dbData.setContentType("D");
+			dbData.setSubjectType("D");
+			dbData.setSignatureType("D");
+			dbData.setClosingType("D");
+		}
 
 		try {
-			dbData = otpServiceImp.getEmailByTemplateId(otpBeansData.getEmailTemplateId());
+			if (otpBeansData.getIsDbBased() != 0) {
+				dbData = otpServiceImp.getEmailByTemplateId(otpBeansData.getEmailTemplateId());
+			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 
 		try {
-			dbData1 = otpServiceImp.getApplicationDetailsById(Long.parseLong(otpBeansData.getApplicationId()));
+			if (otpBeansData.getIsDbBased() != 0) {
+				dbData1 = otpServiceImp.getApplicationDetailsById(Long.parseLong(otpBeansData.getApplicationId()));
+			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-		System.out.println(otpBeansData.getContent());
+//		System.out.println(otpBeansData.getContent());
 		String content1 = otpBeansData.getContent().replaceAll("\n", " \n ");
-		// System.out.println("ApplicationId---->"+content1);
-
-		// System.out.println("Get Application Id--->"+dbData1.getId());
-		// System.out.println("dbData--->"+dbData1.getApplicationName());
-		// System.out.println("dbData--->"+dbData.getEmailTemplateId());
-		// System.out.println("dbData--->"+dbData.getTemplateName());
-		// System.out.println("-----------------Send mail-----------------------");
 
 		HashMap<String, String> responseMap = new LinkedHashMap<String, String>();
 		Properties props = new Properties();
 		props.put("mail.smtp.auth", "false");
 //		props.put("mail.smtp.ssl.enable", "true");
-		props.put("mail.smtp.host", "164.100.14.95");
-		props.put("mail.smtp.port", "25");
+//		props.put("mail.smtp.host", "164.100.14.95");
+//		props.put("mail.smtp.port", "25");
 
 //		props.put("mail.smtp.host", "10.194.83.232");
 //		props.put("mail.smtp.port", "25");
+		
+		props.put("mail.smtp.host", "164.100.13.60");
+		props.put("mail.smtp.port", "25");
+		
 		try {
-			Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+//			Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+//				protected PasswordAuthentication getPasswordAuthentication() {
+////					return new PasswordAuthentication("nicsupport-edu@gov.in", "E0$eA7@vO2");
+//					return new PasswordAuthentication(null, null);
+//				}
+//			});
+
+			Session session = Session.getInstance(props, new jakarta.mail.Authenticator() {
+				@Override
 				protected PasswordAuthentication getPasswordAuthentication() {
-//					return new PasswordAuthentication("nicsupport-edu@gov.in", "E0$eA7@vO2");
+//			      return new PasswordAuthentication("edu@gov.in", "mmm");
 					return new PasswordAuthentication(null, null);
 				}
 			});
@@ -392,17 +395,14 @@ public class MessageContrl {
 				message.addRecipients(Message.RecipientType.BCC, InternetAddress.parse(otpBeansData.getEmailCc()));
 			}
 //			message.setFrom(new InternetAddress("noreply-kvs@gov.in", "KVS Teacher Credentials"));
-			
-			if(otpBeansData.getMailHeading() !=null) {
+
+			if (otpBeansData.getMailHeading() != null) {
 				message.setFrom(new InternetAddress("nicsupport-edu@gov.in", otpBeansData.getMailHeading()));
-			}else {
+			} else {
 				message.setFrom(new InternetAddress("nicsupport-edu@gov.in", "KVS Teacher Credentials"));
 			}
-			
-			
 
 			if (dbData.getSubjectType().equalsIgnoreCase("F")) {
-				// System.out.println("In F");
 				message.setSubject(dbData.getSubject());
 			} else if (dbData.getSubjectType().equalsIgnoreCase("D")) {
 				message.setSubject(otpBeansData.getSubject());
@@ -415,26 +415,20 @@ public class MessageContrl {
 			String closing = "";
 
 			if (dbData.getSignatureType().equalsIgnoreCase("F")) {
-				// System.out.println("In F");
 				signature = dbData.getSignature();
 			} else if (dbData.getSignatureType().equalsIgnoreCase("D")) {
 				signature = otpBeansData.getSignature();
 			}
 
 			if (dbData.getClosingType().equalsIgnoreCase("F")) {
-				// System.out.println("In F");
 				closing = dbData.getClosing();
 			} else if (dbData.getClosingType().equalsIgnoreCase("D")) {
 				closing = otpBeansData.getClosing();
 			}
 
-			// System.out.println("closing--->"+closing);
-
 			MimeBodyPart messageBodyPart = new MimeBodyPart();
 
 			if (dbData.getContentType().equalsIgnoreCase("F")) {
-
-				// System.out.println("In F");
 				String content = dbData.getContent().replaceAll("\n", " \n ");
 				messageContent = "<pre><p>" + signature + ",</p> <p>" + content + "</p> <br><p>Regards,</p> <p>"
 						+ closing + "</p></pre>";
@@ -443,8 +437,6 @@ public class MessageContrl {
 				messageBodyPart.setContent(messageContent, "text/html");
 			} else if (dbData.getContentType().equalsIgnoreCase("D")) {
 				String content = otpBeansData.getContent().replaceAll("\n", " \n ");
-
-//						// System.out.println("content-->"+content);
 				if (signature == null || (signature.equalsIgnoreCase("") && closing.equalsIgnoreCase(""))) {
 					messageContent = "<p>" + content + "</p>";
 				} else {
@@ -456,10 +448,6 @@ public class MessageContrl {
 				messageBodyPart.setContent(messageContent, "text/html");
 			}
 
-//					// System.out.println("messageContent---->"+messageContent);
-//					// System.out.println("");
-//					message.setContent("Hello", "text/html;");
-
 			Multipart multipart = new MimeMultipart();
 			multipart.addBodyPart(messageBodyPart);
 
@@ -467,8 +455,6 @@ public class MessageContrl {
 
 			if (otpBeansData.getAttachmentYn() == 1) {
 				File file = new File(otpBeansData.getAttachmentPath());
-//				        File file = new File("/tmp/abc.txt");
-//				        File file1 = new File("/resources/abc.txt");
 
 				byte[] fileDecoded = DatatypeConverter.parseBase64Binary(otpBeansData.getPdfbase64Encoded());
 				File file1 = null;
@@ -496,9 +482,7 @@ public class MessageContrl {
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
-//				ByteArrayDataSource bds = new ByteArrayDataSource(fileDecoded, "test.pdf"); 
-//				attachPart.setDataHandler(new DataHandler(bds)); 
-//				attachPart.setFileName(bds.getName());
+
 				String absolutePath = file1.getAbsolutePath();
 				attachPart.attachFile(absolutePath);
 				multipart.addBodyPart(attachPart);
@@ -507,19 +491,20 @@ public class MessageContrl {
 
 			Transport transport = session.getTransport("smtp");
 //			transport.connect("10.194.83.232", null, null);
-			transport.connect("164.100.14.95", null, null);
+//			transport.connect("164.100.14.95", null, null);
+			transport.connect("192.168.3.3", null, null);
+			
+			
 
 //					 Transport.send(msg);
 
 			transport.send(message);
 
 			transport.sendMessage(message, message.getAllRecipients());
-
+//			System.out.println("Mail Sent Succesfully");
 			responseMap.put("STATUS", "true");
 			responseMap.put("MSG", "Email Sent");
-			// System.out.println("Template Name---."+dbData.getTemplateName());
 			OtpMailHistry obj = new OtpMailHistry();
-			// System.out.println("before send mail");
 			obj.setUniqueId(otpBeansData.getEmailTemplateId());
 			obj.setCount(1L);
 			obj.setType("MESSAGE");
@@ -527,12 +512,7 @@ public class MessageContrl {
 			obj.setApplicationId(String.valueOf(dbData1.getId()));
 			obj.setTemplateName(dbData.getTemplateName());
 
-			updateHistry(obj);
-
-//				} else {
-//					responseMap.put("STATUS", "false");
-//					responseMap.put("MSG", "Email Address Not Found");
-//				}
+//			updateHistry(obj);
 
 			return responseMap;
 		} catch (MessagingException e) {
@@ -597,8 +577,16 @@ public class MessageContrl {
 		props.put("mail.smtp.host", "10.194.83.232");
 		props.put("mail.smtp.port", "25");
 		try {
-			Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+//			Session session = Session.getInstance(props, new javax.mail.Authenticator() {
+//				protected PasswordAuthentication getPasswordAuthentication() {
+//					return new PasswordAuthentication(null, null);
+//				}
+//			});
+
+			Session session = Session.getInstance(props, new jakarta.mail.Authenticator() {
+				@Override
 				protected PasswordAuthentication getPasswordAuthentication() {
+//			      return new PasswordAuthentication("edu@gov.in", "mmm");
 					return new PasswordAuthentication(null, null);
 				}
 			});
@@ -989,5 +977,3 @@ public class MessageContrl {
 	}
 
 }
-
-

@@ -76,6 +76,9 @@ public class EmailBean {
 	@Transient
 	private Integer reportType;
 	
+	@Transient
+	private Integer isDbBased;
+	
 	
 	public Long getId() {
 		return id;
@@ -245,6 +248,12 @@ public class EmailBean {
 	}
 	public void setMailHeading(String mailHeading) {
 		this.mailHeading = mailHeading;
+	}
+	public Integer getIsDbBased() {
+		return isDbBased;
+	}
+	public void setIsDbBased(Integer isDbBased) {
+		this.isDbBased = isDbBased;
 	}
 	
 	
