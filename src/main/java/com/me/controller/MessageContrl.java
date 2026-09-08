@@ -28,6 +28,8 @@ import tools.jackson.databind.ObjectMapper;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -137,6 +139,7 @@ public class MessageContrl {
 						+ otpData.getTemplateId();
 			} else {
 				message = otpBeansData.getDynamicData().get(0);
+				 message = URLEncoder.encode(message, StandardCharsets.UTF_8);
 				q = "&message=" + message + "&mnumber=91" + otpBeansData.getMobile() + "&signature=" + "SELMOE"
 						+ "&dlt_entity_id=" + "1101607010000029348" + "&dlt_template_id=" + "1107171385841986951";
 			}
@@ -148,15 +151,17 @@ public class MessageContrl {
 		try {
 
 //			String https_url = "https://hydgw.sms.gov.in/failsafe/MLink?username=shagun.sms&pin=P%26j6%40tRb";
-			String userName = accData.getUserName() == null ? "shagun.sms" : accData.getUserName();
+			String userName = accData.getUserName() == null ? "shagun.otp" : accData.getUserName();
 
-			String pin = accData.getPin() == null ? "P%26j6@tRb" : accData.getPin();
-
-			String https_url = "https://smsgw.sms.gov.in/failsafe/HttpLink?username=" + userName + "&pin=" + pin;
+//			String pin = accData.getPin() == null ? "P%26j6@tRb" : accData.getPin();
+			String pin = accData.getPin() == null ? "Smpp@123" : accData.getPin();
+//			String https_url = "https://smsgw.sms.gov.in/failsafe/HttpLink?username=" + userName + "&pin=" + pin;
 //			String https_url = "https://hydgw.sms.gov.in/failsafe/MLink?username=" + accData.getUserName() + "&pin="
 //					+ accData.getPin();
+			String https_url = "https://api1.sms.gov.in/failsafe/MLink?username=" + userName + "&pin=" + pin;
+			
 
-//			System.out.println("https_url---->" + https_url);
+			System.out.println("https_url---->" + https_url);
 			URL url;
 			String messageval = "";
 			try {
@@ -174,17 +179,25 @@ public class MessageContrl {
 //						+ otpData.getSignature() + "&dlt_entity_id=" + otpData.getEntityId() + "&dlt_template_id="
 //						+ otpData.getTemplateId();
 
-//				System.out.println("final message----" + q);
+				System.out.println("final message----" + q);
+				https_url =https_url+q;
+				System.out.println("final https_url---"+https_url);
 
 				url = new URL(https_url);
 				HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
-				con.setDoOutput(true);
-				OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
-				String line2 = wr.toString();
-				wr.write(q);
-				wr.flush();
+				con.setRequestMethod("GET");
+//				con.setDoOutput(true);
+//				OutputStreamWriter wr = new OutputStreamWriter(con.getOutputStream());
+//				String line2 = wr.toString();
+//				wr.write(q);
+//				wr.flush();
+				System.out.println("URL: " + https_url);
+				System.out.println("Connection: " + con);
 
+				System.out.println("con---"+con);
+				
 				messageval = print_content(con);
+				con.disconnect();
 
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
